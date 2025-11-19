@@ -1062,7 +1062,7 @@ with footer_col:
     with col2:
         st.link_button(
             "💼 LinkedIn",
-            "https://www.linkedin.com/in/asif-siddique",
+            "https://linkedin.com/in/asif-siddique-82a8b92b4",
             use_container_width=True
         )
     
@@ -1081,4 +1081,5 @@ with footer_col:
         </div>
         """,
         unsafe_allow_html=True
+
     )
