@@ -865,109 +865,238 @@ if predict_btn:
         report_text = "\n".join(lines)
 
         if PDF_AVAILABLE:
-            try:
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_font("Arial", "B", 18)
-                pdf.cell(0, 12, "Heart Stroke Risk Report", ln=True, align='C')
-                pdf.ln(6)
+    try:
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
 
-                pdf.set_font("Arial", "", 10)
-                pdf.set_text_color(80, 80, 80)
-                pdf.cell(0, 6, f"Generated: {report_time}", ln=True, align='C')
-                pdf.ln(8)
+        # Set safe margins
+        pdf.set_left_margin(10)
+        pdf.set_right_margin(10)
 
-                pdf.set_font("Arial", "B", 14)
-                pdf.set_text_color(0, 0, 0)
-                pdf.cell(0, 8, "Risk Assessment", ln=True)
-                pdf.set_font("Arial", "", 11)
-                pdf.multi_cell(0, 6, f"Risk Category: {risk_label}")
-                pdf.multi_cell(0, 6, f"Estimated Risk Score: {risk_score if risk_score is not None else 'N/A'}%")
-                pdf.ln(4)
+        pdf.add_page()
 
-                pdf.set_font("Arial", "B", 14)
-                pdf.cell(0, 8, "Input Details", ln=True)
-                pdf.set_font("Arial", "", 10)
-                
-                input_details = [
-                    f"Age: {age} years",
-                    f"Sex: {sex}",
-                    f"Resting Blood Pressure: {resting_bp} mm Hg",
-                    f"Cholesterol: {cholesterol} mg/dL",
-                    f"Fasting Blood Sugar: {'Yes (>120)' if fasting_bs == 1 else 'No (<120)'}",
-                    f"Max Heart Rate: {max_hr} bpm",
-                    f"Oldpeak: {oldpeak}",
-                    f"Chest Pain Type: {chest_pain}",
-                    f"Resting ECG: {resting_ecg}",
-                    f"Exercise-Induced Angina: {exercise_angina}",
-                    f"ST Slope: {st_slope}"
-                ]
-                
-                for detail in input_details:
-                    pdf.multi_cell(0, 5, detail)
-                pdf.ln(4)
+        # Effective page width (usable width)
+        epw = pdf.w - pdf.l_margin - pdf.r_margin
 
-                pdf.set_font("Arial", "B", 14)
-                pdf.cell(0, 8, "Health Indicators", ln=True)
-                pdf.set_font("Arial", "", 10)
-                
-                health_indicators = [
-                    f"Blood Pressure: {bp_level} ({resting_bp} mm Hg)",
-                    f"Cholesterol: {chol_level} ({cholesterol} mg/dL)",
-                    f"Max Heart Rate: {hr_level} ({max_hr} bpm)",
-                    f"Blood Sugar: {sugar_level}"
-                ]
-                
-                for indicator in health_indicators:
-                    pdf.multi_cell(0, 5, indicator)
-                pdf.ln(6)
+        # ---------- TITLE ----------
+        pdf.set_font("Arial", "B", 18)
+        pdf.cell(0, 12, "Heart Stroke Risk Report", ln=True, align='C')
+        pdf.ln(6)
 
-                pdf.set_font("Arial", "B", 12)
-                pdf.set_text_color(200, 0, 0)
-                pdf.cell(0, 8, "IMPORTANT DISCLAIMER", ln=True)
-                pdf.set_font("Arial", "", 9)
-                pdf.set_text_color(80, 80, 80)
-                
-                disclaimer_text = (
-                    "This report is for educational purposes only and is NOT a medical diagnosis. "
-                    "Please consult with a qualified healthcare professional for proper medical "
-                    "advice and treatment. If you experience chest pain, shortness of breath, or "
-                    "other concerning symptoms, seek emergency medical care immediately."
-                )
-                pdf.multi_cell(0, 5, disclaimer_text)
-                
-                pdf_bytes = pdf.output(dest="S").encode("latin-1")
+        # ---------- META INFO ----------
+        pdf.set_font("Arial", "", 10)
+        pdf.set_text_color(80, 80, 80)
+        pdf.multi_cell(epw, 5, f"Generated: {report_time}", align='C')
+        pdf.ln(4)
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.download_button(
-                        "📄 Download Report (PDF)",
-                        data=pdf_bytes,
-                        file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                        mime="application/pdf"
-                    )
-                with col2:
-                    st.download_button(
-                        "📝 Download Report (TXT)",
-                        data=report_text.encode("utf-8"),
-                        file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                        mime="text/plain"
-                    )
-            except Exception as e:
-                st.warning(f"PDF generation failed: {str(e)}. Offering text format only.")
-                st.download_button(
-                    "📝 Download Report (TXT)",
-                    data=report_text.encode("utf-8"),
-                    file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                    mime="text/plain"
-                )
-        else:
+        # ---------- RISK ASSESSMENT ----------
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 8, "Risk Assessment", ln=True)
+        pdf.set_font("Arial", "", 11)
+
+        pdf.multi_cell(epw, 6, f"Risk Category: {risk_label}")
+        pdf.multi_cell(epw, 6, f"Estimated Risk Score: {risk_score if risk_score is not None else 'N/A'}%")
+        pdf.ln(4)
+
+        # ---------- INPUT DETAILS ----------
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 8, "Input Details", ln=True)
+        pdf.set_font("Arial", "", 10)
+
+        input_details = [
+            f"Age: {age} years",
+            f"Sex: {sex}",
+            f"Resting Blood Pressure: {resting_bp} mm Hg",
+            f"Cholesterol: {cholesterol} mg/dL",
+            f"Fasting Blood Sugar: {'Yes (>120)' if fasting_bs == 1 else 'No (<120)'}",
+            f"Max Heart Rate: {max_hr} bpm",
+            f"Oldpeak: {oldpeak}",
+            f"Chest Pain Type: {chest_pain}",
+            f"Resting ECG: {resting_ecg}",
+            f"Exercise-Induced Angina: {exercise_angina}",
+            f"ST Slope: {st_slope}",
+        ]
+
+        for detail in input_details:
+            pdf.multi_cell(epw, 5, detail)
+        pdf.ln(4)
+
+        # ---------- HEALTH INDICATORS ----------
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 8, "Health Indicators", ln=True)
+        pdf.set_font("Arial", "", 10)
+
+        health_indicators = [
+            f"Blood Pressure: {bp_level} ({resting_bp} mm Hg)",
+            f"Cholesterol: {chol_level} ({cholesterol} mg/dL)",
+            f"Max Heart Rate: {hr_level} ({max_hr} bpm)",
+            f"Blood Sugar: {sugar_level}",
+        ]
+
+        for indicator in health_indicators:
+            pdf.multi_cell(epw, 5, indicator)
+        pdf.ln(6)
+
+        # ---------- DISCLAIMER ----------
+        pdf.set_font("Arial", "B", 12)
+        pdf.set_text_color(200, 0, 0)
+        pdf.cell(0, 8, "IMPORTANT DISCLAIMER", ln=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.set_text_color(80, 80, 80)
+
+        disclaimer_text = (
+            "This report is for educational purposes only and is NOT a medical diagnosis. "
+            "Please consult with a qualified healthcare professional for proper medical "
+            "advice and treatment. If you experience chest pain, shortness of breath, or "
+            "other concerning symptoms, seek emergency medical care immediately."
+        )
+        pdf.multi_cell(epw, 5, disclaimer_text)
+
+        # ---------- EXPORT ----------
+        pdf_bytes = pdf.output(dest="S").encode("latin-1")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                "📄 Download Report (PDF)",
+                data=pdf_bytes,
+                file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf"
+            )
+        with col2:
             st.download_button(
                 "📝 Download Report (TXT)",
                 data=report_text.encode("utf-8"),
                 file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
                 mime="text/plain"
             )
+
+    except Exception as e:
+        st.warning(f"PDF generation failed: {str(e)}. Offering text format only.")
+        st.download_button(
+            "📝 Download Report (TXT)",
+            data=report_text.encode("utf-8"),
+            file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            mime="text/plain"
+        )
+if PDF_AVAILABLE:
+    try:
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        # Set safe margins
+        pdf.set_left_margin(10)
+        pdf.set_right_margin(10)
+
+        pdf.add_page()
+
+        # Effective page width (usable width)
+        epw = pdf.w - pdf.l_margin - pdf.r_margin
+
+        # ---------- TITLE ----------
+        pdf.set_font("Arial", "B", 18)
+        pdf.cell(0, 12, "Heart Stroke Risk Report", ln=True, align='C')
+        pdf.ln(6)
+
+        # ---------- META INFO ----------
+        pdf.set_font("Arial", "", 10)
+        pdf.set_text_color(80, 80, 80)
+        pdf.multi_cell(epw, 5, f"Generated: {report_time}", align='C')
+        pdf.ln(4)
+
+        # ---------- RISK ASSESSMENT ----------
+        pdf.set_text_color(0, 0, 0)
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 8, "Risk Assessment", ln=True)
+        pdf.set_font("Arial", "", 11)
+
+        pdf.multi_cell(epw, 6, f"Risk Category: {risk_label}")
+        pdf.multi_cell(epw, 6, f"Estimated Risk Score: {risk_score if risk_score is not None else 'N/A'}%")
+        pdf.ln(4)
+
+        # ---------- INPUT DETAILS ----------
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 8, "Input Details", ln=True)
+        pdf.set_font("Arial", "", 10)
+
+        input_details = [
+            f"Age: {age} years",
+            f"Sex: {sex}",
+            f"Resting Blood Pressure: {resting_bp} mm Hg",
+            f"Cholesterol: {cholesterol} mg/dL",
+            f"Fasting Blood Sugar: {'Yes (>120)' if fasting_bs == 1 else 'No (<120)'}",
+            f"Max Heart Rate: {max_hr} bpm",
+            f"Oldpeak: {oldpeak}",
+            f"Chest Pain Type: {chest_pain}",
+            f"Resting ECG: {resting_ecg}",
+            f"Exercise-Induced Angina: {exercise_angina}",
+            f"ST Slope: {st_slope}",
+        ]
+
+        for detail in input_details:
+            pdf.multi_cell(epw, 5, detail)
+        pdf.ln(4)
+
+        # ---------- HEALTH INDICATORS ----------
+        pdf.set_font("Arial", "B", 14)
+        pdf.cell(0, 8, "Health Indicators", ln=True)
+        pdf.set_font("Arial", "", 10)
+
+        health_indicators = [
+            f"Blood Pressure: {bp_level} ({resting_bp} mm Hg)",
+            f"Cholesterol: {chol_level} ({cholesterol} mg/dL)",
+            f"Max Heart Rate: {hr_level} ({max_hr} bpm)",
+            f"Blood Sugar: {sugar_level}",
+        ]
+
+        for indicator in health_indicators:
+            pdf.multi_cell(epw, 5, indicator)
+        pdf.ln(6)
+
+        # ---------- DISCLAIMER ----------
+        pdf.set_font("Arial", "B", 12)
+        pdf.set_text_color(200, 0, 0)
+        pdf.cell(0, 8, "IMPORTANT DISCLAIMER", ln=True)
+        pdf.set_font("Arial", "", 9)
+        pdf.set_text_color(80, 80, 80)
+
+        disclaimer_text = (
+            "This report is for educational purposes only and is NOT a medical diagnosis. "
+            "Please consult with a qualified healthcare professional for proper medical "
+            "advice and treatment. If you experience chest pain, shortness of breath, or "
+            "other concerning symptoms, seek emergency medical care immediately."
+        )
+        pdf.multi_cell(epw, 5, disclaimer_text)
+
+        # ---------- EXPORT ----------
+        pdf_bytes = pdf.output(dest="S").encode("latin-1")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                "📄 Download Report (PDF)",
+                data=pdf_bytes,
+                file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                mime="application/pdf"
+            )
+        with col2:
+            st.download_button(
+                "📝 Download Report (TXT)",
+                data=report_text.encode("utf-8"),
+                file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain"
+            )
+
+    except Exception as e:
+        st.warning(f"PDF generation failed: {str(e)}. Offering text format only.")
+        st.download_button(
+            "📝 Download Report (TXT)",
+            data=report_text.encode("utf-8"),
+            file_name=f"heart_risk_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            mime="text/plain"
+        )
+
 
 # ------------------------ PREDICTION HISTORY ------------------------ #
 if len(st.session_state.prediction_history) > 1:
@@ -1083,3 +1212,4 @@ with footer_col:
         unsafe_allow_html=True
 
     )
+
